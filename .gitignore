@@ -7,4 +7,7 @@ relatorio_impressoras.html
 relatorio_impressoras.xlsx
 historico_impressoras.csv
 backups/
-
+build/
+dist/
+release/
+*.spec

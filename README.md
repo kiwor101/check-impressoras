@@ -32,11 +32,12 @@ Linhas amarelas e vermelhas aparecem no topo de cada grupo para facilitar a prio
 ## Requisitos
 
 - Windows.
-- Python 3 instalado.
 - Computador conectado na mesma rede das impressoras.
 - Acesso web liberado para as impressoras.
 
-Para verificar se o Python esta instalado:
+Para usar pelo instalador `.exe`, o usuario final nao precisa instalar Python.
+
+Python 3 e necessario apenas para desenvolvimento ou para rodar direto pelo codigo-fonte.
 
 ```powershell
 python --version
@@ -54,8 +55,10 @@ python --version
 Para abrir com menos aparicao de terminal, use:
 
 ```txt
-Abrir Check Impressoras.vbs
+Abrir Check Impressoras.lnk
 ```
+
+O arquivo `.lnk` usa o icone do aplicativo. Se o atalho sumir ou precisar recriar, execute `criar_atalho.ps1`.
 
 ## Cadastro de impressoras
 
@@ -111,6 +114,24 @@ Para abrir a interface diretamente pelo Python:
 python .\check_impressoras_gui.py
 ```
 
+## Instalador Windows
+
+O projeto possui script para gerar um instalador `.exe`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build_installer.ps1 -Version "1.1.0"
+```
+
+O instalador fica em:
+
+```txt
+release/
+```
+
+Ao instalar, ele mostra uma tela onde a pessoa escolhe a pasta de instalacao e se deseja criar atalho `Check Impressoras` na Area de Trabalho e no Menu Iniciar.
+
+Mais detalhes em `BUILD.md`.
+
 ## Como funciona
 
 O app consulta os endpoints internos da pagina web da HP Laser MFP 432, principalmente:
@@ -135,6 +156,10 @@ check-impressoras/
 |-- check_impressoras_gui.py
 |-- app_icon.ico
 |-- criar_icone.py
+|-- criar_atalho.ps1
+|-- build_installer.ps1
+|-- BUILD.md
+|-- installer/
 |-- ips.txt
 |-- rodar_check.bat
 |-- Abrir Check Impressoras.vbs

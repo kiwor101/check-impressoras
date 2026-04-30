@@ -3,23 +3,25 @@ from __future__ import annotations
 import os
 import queue
 import shutil
+import sys
 import threading
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 
 import check_impressoras as checker
 
 
-BASE_DIR = Path(__file__).resolve().parent
-IPS_FILE = BASE_DIR / "ips.txt"
-HTML_FILE = BASE_DIR / "relatorio_impressoras.html"
-CSV_FILE = BASE_DIR / "relatorio_impressoras.csv"
-XLSX_FILE = BASE_DIR / "relatorio_impressoras.xlsx"
-HISTORY_FILE = BASE_DIR / "historico_impressoras.csv"
+BASE_DIR = checker.DATA_DIR
+IPS_FILE = checker.DEFAULT_IPS_FILE
+HTML_FILE = checker.DEFAULT_REPORT_FILE
+CSV_FILE = checker.DEFAULT_CSV_FILE
+XLSX_FILE = checker.DEFAULT_XLSX_FILE
+HISTORY_FILE = checker.DEFAULT_HISTORY_FILE
+LOG_FILE = checker.DEFAULT_LOG_FILE
 BACKUP_DIR = BASE_DIR / "backups"
-ICON_FILE = BASE_DIR / "app_icon.ico"
+ICON_FILE = checker.RESOURCE_DIR / "app_icon.ico"
 
 GROUPS = ("Assistencial 24h", "Administrativo")
 
@@ -130,7 +132,9 @@ class CheckImpressorasApp(tk.Tk):
         ttk.Button(buttons, text="Atualizar selecionado", command=self.update_selected).pack(side="left", padx=(0, 8))
         ttk.Button(buttons, text="Remover selecionado", command=self.remove_selected).pack(side="left", padx=(0, 8))
         ttk.Button(buttons, text="Salvar lista", command=self.save_printers).pack(side="left", padx=(0, 8))
-        ttk.Button(buttons, text="Abrir pasta", command=self.open_project_folder).pack(side="left", padx=(0, 8))
+        ttk.Button(buttons, text="Importar lista", command=self.import_printers).pack(side="left", padx=(0, 8))
+        ttk.Button(buttons, text="Exportar lista", command=self.export_printers).pack(side="left", padx=(0, 8))
+        ttk.Button(buttons, text="Abrir pasta de dados", command=self.open_data_folder).pack(side="left", padx=(0, 8))
 
         self.run_button = ttk.Button(buttons, text="Iniciar pesquisa", command=self.start_check, style="Primary.TButton")
         self.run_button.pack(side="right", padx=(8, 0))
@@ -156,6 +160,7 @@ class CheckImpressorasApp(tk.Tk):
         self.result_run_button.pack(side="left", padx=(0, 8))
         ttk.Button(toolbar, text="Abrir Excel", command=self.open_excel).pack(side="left")
         ttk.Button(toolbar, text="Abrir historico", command=self.open_history).pack(side="left", padx=(8, 0))
+        ttk.Button(toolbar, text="Abrir log", command=self.open_log).pack(side="left", padx=(8, 0))
 
         self.assistencial_tree = self.create_result_section(
             parent,
@@ -313,6 +318,94 @@ class CheckImpressorasApp(tk.Tk):
         if show_message:
             self.status_var.set("Lista salva.")
 
+    def import_printers(self) -> None:
+        path = filedialog.askopenfilename(
+            title="Importar lista de impressoras",
+            filetypes=(
+                ("Listas de impressoras", "*.txt *.csv"),
+                ("Todos os arquivos", "*.*"),
+            ),
+        )
+        if not path:
+            return
+
+        try:
+            printers = self.load_import_file(Path(path))
+        except Exception as exc:
+            messagebox.showerror("Erro ao importar", str(exc))
+            return
+
+        if not printers:
+            messagebox.showwarning("Lista vazia", "Nenhuma impressora valida foi encontrada no arquivo.")
+            return
+
+        if not messagebox.askyesno(
+            "Importar lista",
+            f"Importar {len(printers)} impressora(s)?\n\nA lista atual sera substituida.",
+        ):
+            return
+
+        self.tree.delete(*self.tree.get_children())
+        for ip, sector, group in printers:
+            self.tree.insert("", "end", values=(ip, sector, group))
+        self.save_printers(show_message=False)
+        self.status_var.set(f"Lista importada: {len(printers)} impressora(s).")
+
+    def load_import_file(self, path: Path) -> list[tuple[str, str, str]]:
+        text = path.read_text(encoding="utf-8-sig")
+        printers: list[tuple[str, str, str]] = []
+        seen_ips: set[str] = set()
+
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            if ";" in line:
+                parts = [part.strip() for part in line.split(";")]
+            else:
+                parts = [part.strip() for part in line.split(",")]
+
+            if parts and parts[0].lower() in {"ip", "grupo"}:
+                continue
+
+            if len(parts) >= 3 and parts[0].lower() in {"assistencial 24h", "administrativo"}:
+                group = checker.normalize_group(parts[0])
+                ip = parts[1]
+                sector = parts[2]
+            else:
+                ip = parts[0] if len(parts) > 0 else ""
+                sector = parts[1] if len(parts) > 1 else ""
+                group = checker.normalize_group(parts[2] if len(parts) > 2 else "")
+
+            valid, _message = checker.validate_printer_ip(ip)
+            if not valid or not sector or ip in seen_ips:
+                continue
+            seen_ips.add(ip)
+            printers.append((ip, sector, group))
+
+        return printers
+
+    def export_printers(self) -> None:
+        path = filedialog.asksaveasfilename(
+            title="Exportar lista de impressoras",
+            defaultextension=".txt",
+            filetypes=(
+                ("Arquivo de texto", "*.txt"),
+                ("CSV", "*.csv"),
+                ("Todos os arquivos", "*.*"),
+            ),
+        )
+        if not path:
+            return
+
+        rows = [self.tree.item(item, "values") for item in self.tree.get_children()]
+        lines = ["IP;Setor;Grupo"]
+        for ip, sector, group in rows:
+            lines.append(f"{ip};{sector};{checker.normalize_group(group)}")
+        Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+        self.status_var.set(f"Lista exportada: {path}")
+
     def backup_ips_file(self) -> None:
         if not IPS_FILE.exists():
             return
@@ -341,8 +434,10 @@ class CheckImpressorasApp(tk.Tk):
             checker.append_history(results, HISTORY_FILE)
             ok_count = sum(1 for result in results if result.ok)
             message = f"Pesquisa concluida: {ok_count}/{len(results)} impressora(s) OK."
+            checker.write_log(message)
             self.result_queue.put(("ok", message, results))
         except Exception as exc:
+            checker.write_log(f"Erro ao pesquisar: {exc}")
             self.result_queue.put(("error", str(exc), None))
 
     def poll_result_queue(self) -> None:
@@ -421,8 +516,14 @@ class CheckImpressorasApp(tk.Tk):
         else:
             messagebox.showinfo("Historico nao encontrado", "Clique em Iniciar pesquisa para gerar o historico.")
 
-    def open_project_folder(self) -> None:
+    def open_data_folder(self) -> None:
         os.startfile(BASE_DIR)
+
+    def open_log(self) -> None:
+        if LOG_FILE.exists():
+            os.startfile(LOG_FILE)
+        else:
+            messagebox.showinfo("Log nao encontrado", "O log sera criado na proxima pesquisa.")
 
     def open_selected_result_printer(self, event: tk.Event) -> None:
         tree = event.widget

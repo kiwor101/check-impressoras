@@ -6,7 +6,9 @@ import html
 import http.client
 import ipaddress
 import json
+import os
 import re
+import shutil
 import socket
 import ssl
 import sys
@@ -22,12 +24,19 @@ from urllib.parse import urlsplit
 from xml.sax.saxutils import escape
 
 
-BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_IPS_FILE = BASE_DIR / "ips.txt"
-DEFAULT_REPORT_FILE = BASE_DIR / "relatorio_impressoras.html"
-DEFAULT_CSV_FILE = BASE_DIR / "relatorio_impressoras.csv"
-DEFAULT_XLSX_FILE = BASE_DIR / "relatorio_impressoras.xlsx"
-DEFAULT_HISTORY_FILE = BASE_DIR / "historico_impressoras.csv"
+APP_NAME = "Check Impressoras"
+IS_FROZEN = getattr(sys, "frozen", False)
+BASE_DIR = Path(sys.executable).resolve().parent if IS_FROZEN else Path(__file__).resolve().parent
+RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", BASE_DIR)) if IS_FROZEN else BASE_DIR
+DATA_DIR = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / APP_NAME if IS_FROZEN else BASE_DIR
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+DEFAULT_IPS_FILE = DATA_DIR / "ips.txt"
+DEFAULT_REPORT_FILE = DATA_DIR / "relatorio_impressoras.html"
+DEFAULT_CSV_FILE = DATA_DIR / "relatorio_impressoras.csv"
+DEFAULT_XLSX_FILE = DATA_DIR / "relatorio_impressoras.xlsx"
+DEFAULT_HISTORY_FILE = DATA_DIR / "historico_impressoras.csv"
+DEFAULT_LOG_FILE = DATA_DIR / "check_impressoras.log"
 MAX_RESPONSE_BYTES = 2_000_000
 
 PRINTER_PATHS = (
@@ -79,7 +88,11 @@ def validate_printer_ip(ip: str) -> tuple[bool, str]:
 
 def read_printers(path: Path) -> list[tuple[str, str, str]]:
     if not path.exists():
-        path.write_text("192.168.1.15;Financeiro;Assistencial 24h\n", encoding="utf-8")
+        bundled_ips = RESOURCE_DIR / "ips.txt"
+        if bundled_ips.exists() and bundled_ips.resolve() != path.resolve():
+            shutil.copy2(bundled_ips, path)
+        else:
+            path.write_text("192.168.1.15;Financeiro;Assistencial 24h\n", encoding="utf-8")
 
     printers = []
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -381,6 +394,12 @@ def safe_sheet_text(value: object) -> str:
     if text.startswith(("=", "+", "-", "@", "\t", "\r")):
         return "'" + text
     return text
+
+
+def write_log(message: str, path: Path = DEFAULT_LOG_FILE) -> None:
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with path.open("a", encoding="utf-8") as file:
+        file.write(f"[{timestamp}] {message}\n")
 
 
 def write_csv(results: list[PrinterCheck], path: Path) -> None:
@@ -732,6 +751,7 @@ def main() -> int:
     elapsed = time.time() - start
 
     ok_count = sum(1 for result in results if result.ok)
+    write_log(f"Verificacao concluida: {ok_count}/{len(results)} impressora(s) OK em {elapsed:.1f}s.")
     print(f"Verificacao concluida: {ok_count}/{len(results)} impressora(s) OK em {elapsed:.1f}s.")
     print(f"Relatorio HTML: {html_path}")
     print(f"Relatorio CSV:  {csv_path}")
