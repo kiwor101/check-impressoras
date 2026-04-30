@@ -16,6 +16,7 @@ O projeto foi criado para evitar a rotina manual de entrar IP por IP na pagina w
 - Historico acumulado das pesquisas em CSV.
 - Backup automatico da lista de impressoras antes de salvar alteracoes.
 - Validacao para impedir IP invalido, duplicado ou fora da rede local.
+- Icone proprio na janela do aplicativo.
 - Compatibilidade com impressoras que redirecionam HTTP para HTTPS antigo.
 
 ## Regras de cor
@@ -132,6 +133,8 @@ Os campos usados sao:
 check-impressoras/
 |-- check_impressoras.py
 |-- check_impressoras_gui.py
+|-- app_icon.ico
+|-- criar_icone.py
 |-- ips.txt
 |-- rodar_check.bat
 |-- Abrir Check Impressoras.vbs

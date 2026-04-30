@@ -19,6 +19,7 @@ CSV_FILE = BASE_DIR / "relatorio_impressoras.csv"
 XLSX_FILE = BASE_DIR / "relatorio_impressoras.xlsx"
 HISTORY_FILE = BASE_DIR / "historico_impressoras.csv"
 BACKUP_DIR = BASE_DIR / "backups"
+ICON_FILE = BASE_DIR / "app_icon.ico"
 
 GROUPS = ("Assistencial 24h", "Administrativo")
 
@@ -29,6 +30,7 @@ class CheckImpressorasApp(tk.Tk):
         self.title("Check Impressoras")
         self.geometry("1080x700")
         self.minsize(940, 620)
+        self.set_window_icon()
         self.result_queue: queue.Queue[tuple[str, str, list[checker.PrinterCheck] | None]] = queue.Queue()
 
         self.ip_var = tk.StringVar()
@@ -43,6 +45,13 @@ class CheckImpressorasApp(tk.Tk):
         self.create_widgets()
         self.load_printers()
         self.after(200, self.poll_result_queue)
+
+    def set_window_icon(self) -> None:
+        if ICON_FILE.exists():
+            try:
+                self.iconbitmap(str(ICON_FILE))
+            except tk.TclError:
+                pass
 
     def create_styles(self) -> None:
         style = ttk.Style(self)
