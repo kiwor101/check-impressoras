@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Check Impressoras</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      --ink: #17212b;
+      --muted: #617080;
+      --line: #d8dee6;
+      --good: #e9f7ef;
+      --warn: #fff5d9;
+      --bad: #fde8e8;
+      --blue: #0b7fc3;
+    }
+    body { margin: 0; background: #f6f8fa; color: var(--ink); }
+    header { background: #ffffff; border-bottom: 1px solid var(--line); padding: 22px 28px; }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    p { margin: 0; color: var(--muted); }
+    main { padding: 24px 28px; }
+    .actions { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+    .button { background: var(--blue); color: #fff; text-decoration: none; border-radius: 6px; padding: 10px 14px; font-weight: 700; }
+    section { margin-top: 26px; }
+    .section-title { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    h2 { margin: 0; font-size: 20px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--line); }
+    th, td { padding: 12px; border-bottom: 1px solid var(--line); text-align: left; font-size: 14px; }
+    th { background: #eef3f8; color: #263544; }
+    tr.good { background: var(--good); }
+    tr.warn { background: var(--warn); }
+    tr.bad { background: var(--bad); }
+    td:last-child { color: #8a1f1f; }
+    a { color: #075f96; }
+    @media (max-width: 780px) {
+      main, header { padding-left: 14px; padding-right: 14px; }
+      table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Check Impressoras</h1>
+    <p>Ultima verificacao: 30/04/2026 11:27:41</p>
+  </header>
+  <main>
+    <div class="actions">
+      <a class="button" href="relatorio_impressoras.csv">Abrir CSV</a>
+      <a class="button" href="relatorio_impressoras.xlsx">Abrir Excel</a>
+      <p>29 impressora(s) verificadas</p>
+    </div>
+    
+    <section>
+      <div class="section-title">
+        <h2>Setores assistenciais 24h</h2>
+        <p>10/10 OK</p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>IP</th>
+            <th>Setor</th>
+            <th>Cartucho de toner</th>
+            <th>Unidade de imagem</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+            <tr class="warn">
+              <td><a href="https://192.168.0.40/sws/app/information/home/home.json" target="_blank">192.168.0.40</a></td>
+              <td>raio-x interno</td>
+              <td>22%</td>
+              <td>85%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="warn">
+              <td><a href="https://192.168.1.15/sws/app/information/home/home.json" target="_blank">192.168.1.15</a></td>
+              <td>nir</td>
+              <td>23%</td>
+              <td>55%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="warn">
+              <td><a href="https://192.168.0.81/sws/app/information/home/home.json" target="_blank">192.168.0.81</a></td>
+              <td>raio-x recepcao</td>
+              <td>64%</td>
+              <td>28%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.138/sws/app/information/home/home.json" target="_blank">192.168.0.138</a></td>
+              <td>apartamento</td>
+              <td>38%</td>
+              <td>34%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.74/sws/app/information/home/home.json" target="_blank">192.168.0.74</a></td>
+              <td>UTI interno</td>
+              <td>45%</td>
+              <td>56%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.112/sws/app/information/home/home.json" target="_blank">192.168.0.112</a></td>
+              <td>setor primeira</td>
+              <td>72%</td>
+              <td>49%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.101/sws/app/information/home/home.json" target="_blank">192.168.0.101</a></td>
+              <td>pediatria</td>
+              <td>76%</td>
+              <td>63%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.34/sws/app/information/home/home.json" target="_blank">192.168.0.34</a></td>
+              <td>cc farmácia</td>
+              <td>70%</td>
+              <td>70%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.18/sws/app/information/home/home.json" target="_blank">192.168.0.18</a></td>
+              <td>farmacia</td>
+              <td>83%</td>
+              <td>91%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.54/sws/app/information/home/home.json" target="_blank">192.168.0.54</a></td>
+              <td>cc enfermagem</td>
+              <td>98%</td>
+              <td>99%</td>
+              <td></td>
+            </tr>
+            
+        </tbody>
+      </table>
+    </section>
+    
+    <section>
+      <div class="section-title">
+        <h2>Setores administrativos</h2>
+        <p>19/19 OK</p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>IP</th>
+            <th>Setor</th>
+            <th>Cartucho de toner</th>
+            <th>Unidade de imagem</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+            <tr class="warn">
+              <td><a href="https://192.168.0.200/sws/app/information/home/home.json" target="_blank">192.168.0.200</a></td>
+              <td>compras</td>
+              <td>39%</td>
+              <td>13%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="warn">
+              <td><a href="https://192.168.0.82/sws/app/information/home/home.json" target="_blank">192.168.0.82</a></td>
+              <td>laboratorio ADM</td>
+              <td>13%</td>
+              <td>13%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="warn">
+              <td><a href="https://192.168.0.126/sws/app/information/home/home.json" target="_blank">192.168.0.126</a></td>
+              <td>caixa</td>
+              <td>20%</td>
+              <td>47%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="warn">
+              <td><a href="https://192.168.0.211/sws/app/information/home/home.json" target="_blank">192.168.0.211</a></td>
+              <td>almoxarifado</td>
+              <td>25%</td>
+              <td>71%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="warn">
+              <td><a href="https://192.168.0.60/sws/app/information/home/home.json" target="_blank">192.168.0.60</a></td>
+              <td>faturamento</td>
+              <td>27%</td>
+              <td>32%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.95/sws/app/information/home/home.json" target="_blank">192.168.0.95</a></td>
+              <td>contabilidade</td>
+              <td>39%</td>
+              <td>76%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.115/sws/app/information/home/home.json" target="_blank">192.168.0.115</a></td>
+              <td>SESMT</td>
+              <td>39%</td>
+              <td>84%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.181/sws/app/information/home/home.json" target="_blank">192.168.0.181</a></td>
+              <td>RH</td>
+              <td>86%</td>
+              <td>55%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.71/sws/app/information/home/home.json" target="_blank">192.168.0.71</a></td>
+              <td>financeiro</td>
+              <td>68%</td>
+              <td>89%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.47/sws/app/information/home/home.json" target="_blank">192.168.0.47</a></td>
+              <td>ouvidoria</td>
+              <td>68%</td>
+              <td>88%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.105/sws/app/information/home/home.json" target="_blank">192.168.0.105</a></td>
+              <td>gerencia técnica</td>
+              <td>73%</td>
+              <td>94%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.21/sws/app/information/home/home.json" target="_blank">192.168.0.21</a></td>
+              <td>faturamento interno</td>
+              <td>100%</td>
+              <td>78%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.148/sws/app/information/home/home.json" target="_blank">192.168.0.148</a></td>
+              <td>faturamento2</td>
+              <td>79%</td>
+              <td>91%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.180/sws/app/information/home/home.json" target="_blank">192.168.0.180</a></td>
+              <td>juridico</td>
+              <td>80%</td>
+              <td>93%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.103/sws/app/information/home/home.json" target="_blank">192.168.0.103</a></td>
+              <td>higiene e limpeza</td>
+              <td>81%</td>
+              <td>95%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.216/sws/app/information/home/home.json" target="_blank">192.168.0.216</a></td>
+              <td>gerencia clinica</td>
+              <td>96%</td>
+              <td>100%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.165/sws/app/information/home/home.json" target="_blank">192.168.0.165</a></td>
+              <td>financeiro2</td>
+              <td>98%</td>
+              <td>100%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.67/sws/app/information/home/home.json" target="_blank">192.168.0.67</a></td>
+              <td>contabilidade2</td>
+              <td>100%</td>
+              <td>100%</td>
+              <td></td>
+            </tr>
+            
+            <tr class="good">
+              <td><a href="https://192.168.0.183/sws/app/information/home/home.json" target="_blank">192.168.0.183</a></td>
+              <td>gerencia financeiro</td>
+              <td>100%</td>
+              <td>100%</td>
+              <td></td>
+            </tr>
+            
+        </tbody>
+      </table>
+    </section>
+    
+  </main>
+</body>
+</html>

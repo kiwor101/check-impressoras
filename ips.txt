@@ -1,0 +1,38 @@
+# Coloque uma impressora por linha no formato:
+# IP;Setor;Grupo
+#
+# Grupos aceitos:
+# - Assistencial 24h
+# - Administrativo
+#
+# Se deixar sem grupo, o sistema considera Assistencial 24h.
+
+192.168.1.15;nir;Assistencial 24h
+192.168.0.74;UTI interno;Assistencial 24h
+192.168.0.101;pediatria;Assistencial 24h
+192.168.0.18;farmacia;Assistencial 24h
+192.168.0.112;setor primeira;Assistencial 24h
+192.168.0.138;apartamento;Assistencial 24h
+192.168.0.81;raio-x recepcao;Assistencial 24h
+192.168.0.40;raio-x interno;Assistencial 24h
+192.168.0.54;cc enfermagem;Assistencial 24h
+192.168.0.34;cc farmácia;Assistencial 24h
+192.168.0.95;contabilidade;Administrativo
+192.168.0.82;laboratorio ADM;Administrativo
+192.168.0.71;financeiro;Administrativo
+192.168.0.67;contabilidade2;Administrativo
+192.168.0.60;faturamento;Administrativo
+192.168.0.47;ouvidoria;Administrativo
+192.168.0.216;gerencia clinica;Administrativo
+192.168.0.211;almoxarifado;Administrativo
+192.168.0.21;faturamento interno;Administrativo
+192.168.0.200;compras;Administrativo
+192.168.0.183;gerencia financeiro;Administrativo
+192.168.0.181;RH;Administrativo
+192.168.0.180;juridico;Administrativo
+192.168.0.165;financeiro2;Administrativo
+192.168.0.148;faturamento2;Administrativo
+192.168.0.126;caixa;Administrativo
+192.168.0.115;SESMT;Administrativo
+192.168.0.103;higiene e limpeza;Administrativo
+192.168.0.105;gerencia técnica;Administrativo
