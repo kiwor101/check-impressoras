@@ -1,25 +1,43 @@
 # Check Impressoras
 
-Aplicativo local para consultar impressoras HP Laser MFP 432 na rede e centralizar as informacoes de **Cartucho de toner** e **Unidade de imagem** em uma tela unica.
+Aplicativo Windows para consultar impressoras **HP Laser MFP 432** na rede e exibir, em uma unica tela, os niveis de:
 
-O projeto foi criado para evitar a rotina manual de entrar IP por IP na pagina web de cada impressora.
+- Cartucho de toner
+- Unidade de imagem
 
-## Funcionalidades
+O objetivo do projeto e eliminar a rotina manual de abrir a pagina web de cada impressora IP por IP.
 
-- Cadastro de impressoras por interface grafica.
-- Campos de IP, setor e grupo.
-- Separacao entre setores `Assistencial 24h` e `Administrativo`.
-- Pesquisa automatica das impressoras pela rede local.
+## Status
+
+**Projeto encerrado.**
+
+Versao final entregue: **1.1.0**
+
+Instalador final:
+
+```txt
+release/Check-Impressoras-Setup-1.1.0-win-x64.exe
+```
+
+## Principais recursos
+
+- Interface grafica para cadastro de impressoras.
+- Cadastro por IP, setor e grupo.
+- Separacao entre `Assistencial 24h` e `Administrativo`.
+- Importacao e exportacao da lista de IPs.
+- Pesquisa automatica na rede local.
 - Resultado exibido dentro do proprio app.
-- Destaque por cor conforme nivel mais baixo entre toner e unidade de imagem.
-- Exportacao para CSV, HTML e Excel formatado.
-- Historico acumulado das pesquisas em CSV.
-- Backup automatico da lista de impressoras antes de salvar alteracoes.
-- Validacao para impedir IP invalido, duplicado ou fora da rede local.
-- Icone proprio na janela do aplicativo.
-- Compatibilidade com impressoras que redirecionam HTTP para HTTPS antigo.
+- Relatorios em HTML, CSV e Excel formatado.
+- Historico acumulado das pesquisas.
+- Backup automatico da lista de impressoras.
+- Validacao de IP local e bloqueio de duplicados.
+- Instalador Windows com tela de instalacao.
+- Atalho `Check Impressoras` na Area de Trabalho e/ou Menu Iniciar.
+- Icone proprio do aplicativo.
 
-## Regras de cor
+## Regras de prioridade
+
+O app usa o menor valor entre toner e unidade de imagem para definir a cor da linha.
 
 | Cor | Condicao |
 | --- | --- |
@@ -27,166 +45,151 @@ O projeto foi criado para evitar a rotina manual de entrar IP por IP na pagina w
 | Amarelo | 10% a 29% |
 | Vermelho | 0% a 9% ou erro de acesso |
 
-Linhas amarelas e vermelhas aparecem no topo de cada grupo para facilitar a priorizacao.
+Linhas amarelas e vermelhas aparecem no topo de cada grupo.
 
-## Requisitos
+## Instalacao
 
-- Windows.
-- Computador conectado na mesma rede das impressoras.
-- Acesso web liberado para as impressoras.
+Use o instalador:
 
-Para usar pelo instalador `.exe`, o usuario final nao precisa instalar Python.
-
-Python 3 e necessario apenas para desenvolvimento ou para rodar direto pelo codigo-fonte.
-
-```powershell
-python --version
+```txt
+release/Check-Impressoras-Setup-1.1.0-win-x64.exe
 ```
 
-## Como usar
+Durante a instalacao, o usuario pode escolher:
 
-1. Abra `rodar_check.bat`.
-2. Cadastre as impressoras na aba `Cadastro`.
+- Pasta de instalacao.
+- Criar atalho na Area de Trabalho.
+- Criar atalho no Menu Iniciar.
+- Abrir o app ao finalizar.
+
+O usuario final nao precisa instalar Python.
+
+## Uso
+
+1. Abra o atalho `Check Impressoras`.
+2. Va ate a aba `Cadastro`.
 3. Informe `IP`, `Setor` e `Grupo`.
 4. Clique em `Adicionar`.
 5. Clique em `Iniciar pesquisa`.
-6. Veja o resultado na aba `Resultado da pesquisa`.
+6. Veja os resultados na aba `Resultado da pesquisa`.
 
-Para abrir com menos aparicao de terminal, use:
+Na aba de resultados, dois cliques em uma impressora abrem a pagina web dela no navegador.
 
-```txt
-Abrir Check Impressoras.lnk
-```
+## Importar e exportar lista
 
-O arquivo `.lnk` usa o icone do aplicativo. Se o atalho sumir ou precisar recriar, execute `criar_atalho.ps1`.
+A lista pode ser importada/exportada pela interface.
 
-## Cadastro de impressoras
-
-O app salva a lista no arquivo `ips.txt`.
-
-Formato:
+Formato aceito:
 
 ```txt
 IP;Setor;Grupo
 ```
 
-Exemplos:
+Exemplo:
 
 ```txt
 192.168.1.15;NIR;Assistencial 24h
 192.168.0.200;Financeiro;Administrativo
 ```
 
-Se o grupo nao for informado, a impressora entra automaticamente como `Assistencial 24h`.
+Se o grupo nao for informado, o app considera `Assistencial 24h`.
 
-Exemplo valido:
+## Dados gerados
+
+Em uma instalacao normal, os dados ficam em:
 
 ```txt
-192.168.1.15;NIR
+%LOCALAPPDATA%\Check Impressoras
 ```
 
-## Relatorios gerados
-
-Apos a pesquisa, o app gera:
+Arquivos gerados:
 
 | Arquivo | Uso |
 | --- | --- |
-| `relatorio_impressoras.html` | Relatorio para abrir no navegador |
-| `relatorio_impressoras.csv` | Planilha simples, sem cores |
-| `relatorio_impressoras.xlsx` | Planilha Excel formatada com cores |
-| `historico_impressoras.csv` | Historico acumulado das pesquisas |
-
-O resultado principal tambem aparece dentro da propria interface do app.
-
-Na aba `Resultado da pesquisa`, de dois cliques em uma impressora para abrir a pagina web dela no navegador.
-
-## Execucao pelo terminal
-
-Tambem e possivel rodar a pesquisa sem abrir a interface:
-
-```powershell
-python .\check_impressoras.py
-```
-
-Para abrir a interface diretamente pelo Python:
-
-```powershell
-python .\check_impressoras_gui.py
-```
-
-## Instalador Windows
-
-O projeto possui script para gerar um instalador `.exe`:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\build_installer.ps1 -Version "1.1.0"
-```
-
-O instalador fica em:
-
-```txt
-release/
-```
-
-Ao instalar, ele mostra uma tela onde a pessoa escolhe a pasta de instalacao e se deseja criar atalho `Check Impressoras` na Area de Trabalho e no Menu Iniciar.
-
-Mais detalhes em `BUILD.md`.
+| `ips.txt` | Lista cadastrada de impressoras |
+| `relatorio_impressoras.html` | Relatorio em navegador |
+| `relatorio_impressoras.csv` | Planilha simples |
+| `relatorio_impressoras.xlsx` | Planilha Excel formatada |
+| `historico_impressoras.csv` | Historico acumulado |
+| `check_impressoras.log` | Log de execucao |
+| `backups/` | Backups automaticos do cadastro |
 
 ## Como funciona
 
-O app consulta os endpoints internos da pagina web da HP Laser MFP 432, principalmente:
+O app consulta endpoints internos da pagina web da impressora:
 
 ```txt
 /sws/app/information/home/home.json
 /sws/app/information/supplies/supplies.json
 ```
 
-Os campos usados sao:
+Campos utilizados:
 
-| Informacao | Campo da impressora |
+| Informacao | Campo |
 | --- | --- |
 | Cartucho de toner | `toner_black.remaining` |
 | Unidade de imagem | `drum_black.remaining` |
 
-## Estrutura dos arquivos
+## Seguranca
+
+- Aceita apenas IPv4 de rede local.
+- Bloqueia IP duplicado no cadastro.
+- Limita o tamanho da resposta recebida da impressora.
+- Trata textos exportados para CSV/Excel para evitar interpretacao como formula.
+- Dados e logs ficam no perfil local do usuario.
+
+## Desenvolvimento
+
+Para rodar pelo codigo-fonte:
+
+```powershell
+python .\check_impressoras_gui.py
+```
+
+Para rodar a pesquisa sem interface:
+
+```powershell
+python .\check_impressoras.py
+```
+
+Para gerar o instalador:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build_installer.ps1 -Version "1.1.0"
+```
+
+Mais detalhes em:
+
+```txt
+BUILD.md
+```
+
+## Windows 32 e 64 bits
+
+O instalador atual foi gerado para Windows 64 bits:
+
+```txt
+Check-Impressoras-Setup-1.1.0-win-x64.exe
+```
+
+Para gerar uma versao 32 bits, execute o build usando Python 32-bit. O script gera automaticamente o sufixo `win-x86`.
+
+## Estrutura
 
 ```txt
 check-impressoras/
 |-- check_impressoras.py
 |-- check_impressoras_gui.py
 |-- app_icon.ico
-|-- criar_icone.py
-|-- criar_atalho.ps1
 |-- build_installer.ps1
 |-- BUILD.md
 |-- installer/
+|-- release/
 |-- ips.txt
 |-- rodar_check.bat
-|-- Abrir Check Impressoras.vbs
-|-- relatorio_impressoras.html
-|-- relatorio_impressoras.csv
-|-- relatorio_impressoras.xlsx
-|-- historico_impressoras.csv
-|-- backups/
 `-- README.md
 ```
 
-## Observacoes
+## Encerramento
 
-- O app precisa estar em uma maquina com acesso aos IPs das impressoras.
-- Por seguranca, o cadastro aceita apenas IPv4 de rede local.
-- Impressoras desligadas, lentas ou fora da rede aparecem em vermelho com erro no campo `Resultado`.
-- CSV nao guarda cores; use o arquivo `.xlsx` para a versao mais apresentavel no Excel.
-- A lista de IPs pode ser editada pela interface ou manualmente pelo `ips.txt`.
-- Textos exportados para CSV/Excel sao tratados para evitar interpretacao indevida como formula.
-
-## Status do projeto
-
-Projeto em uso interno e em evolucao.
-
-Melhorias futuras possiveis:
-
-- Gerar instalador para Windows.
-- Criar icone e atalho na area de trabalho.
-- Adicionar historico semanal.
-- Enviar alerta automatico quando algum item estiver amarelo ou vermelho.
+Projeto finalizado com instalador funcional, interface grafica, importacao/exportacao de lista, relatorios, historico, logs e validacoes de seguranca.
