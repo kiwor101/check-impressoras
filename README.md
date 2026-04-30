@@ -13,6 +13,9 @@ O projeto foi criado para evitar a rotina manual de entrar IP por IP na pagina w
 - Resultado exibido dentro do proprio app.
 - Destaque por cor conforme nivel mais baixo entre toner e unidade de imagem.
 - Exportacao para CSV, HTML e Excel formatado.
+- Historico acumulado das pesquisas em CSV.
+- Backup automatico da lista de impressoras antes de salvar alteracoes.
+- Validacao para impedir IP invalido, duplicado ou fora da rede local.
 - Compatibilidade com impressoras que redirecionam HTTP para HTTPS antigo.
 
 ## Regras de cor
@@ -87,8 +90,11 @@ Apos a pesquisa, o app gera:
 | `relatorio_impressoras.html` | Relatorio para abrir no navegador |
 | `relatorio_impressoras.csv` | Planilha simples, sem cores |
 | `relatorio_impressoras.xlsx` | Planilha Excel formatada com cores |
+| `historico_impressoras.csv` | Historico acumulado das pesquisas |
 
 O resultado principal tambem aparece dentro da propria interface do app.
+
+Na aba `Resultado da pesquisa`, de dois cliques em uma impressora para abrir a pagina web dela no navegador.
 
 ## Execucao pelo terminal
 
@@ -132,15 +138,19 @@ check-impressoras/
 |-- relatorio_impressoras.html
 |-- relatorio_impressoras.csv
 |-- relatorio_impressoras.xlsx
+|-- historico_impressoras.csv
+|-- backups/
 `-- README.md
 ```
 
 ## Observacoes
 
 - O app precisa estar em uma maquina com acesso aos IPs das impressoras.
+- Por seguranca, o cadastro aceita apenas IPv4 de rede local.
 - Impressoras desligadas, lentas ou fora da rede aparecem em vermelho com erro no campo `Resultado`.
 - CSV nao guarda cores; use o arquivo `.xlsx` para a versao mais apresentavel no Excel.
 - A lista de IPs pode ser editada pela interface ou manualmente pelo `ips.txt`.
+- Textos exportados para CSV/Excel sao tratados para evitar interpretacao indevida como formula.
 
 ## Status do projeto
 

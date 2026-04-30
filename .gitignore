@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+
+# Arquivos gerados pelo uso do app
+relatorio_impressoras.csv
+relatorio_impressoras.html
+relatorio_impressoras.xlsx
+historico_impressoras.csv
+backups/
+

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import os
 import queue
+import shutil
 import threading
 import tkinter as tk
+from datetime import datetime
 from pathlib import Path
 from tkinter import messagebox, ttk
 
@@ -15,6 +17,8 @@ IPS_FILE = BASE_DIR / "ips.txt"
 HTML_FILE = BASE_DIR / "relatorio_impressoras.html"
 CSV_FILE = BASE_DIR / "relatorio_impressoras.csv"
 XLSX_FILE = BASE_DIR / "relatorio_impressoras.xlsx"
+HISTORY_FILE = BASE_DIR / "historico_impressoras.csv"
+BACKUP_DIR = BASE_DIR / "backups"
 
 GROUPS = ("Assistencial 24h", "Administrativo")
 
@@ -117,6 +121,7 @@ class CheckImpressorasApp(tk.Tk):
         ttk.Button(buttons, text="Atualizar selecionado", command=self.update_selected).pack(side="left", padx=(0, 8))
         ttk.Button(buttons, text="Remover selecionado", command=self.remove_selected).pack(side="left", padx=(0, 8))
         ttk.Button(buttons, text="Salvar lista", command=self.save_printers).pack(side="left", padx=(0, 8))
+        ttk.Button(buttons, text="Abrir pasta", command=self.open_project_folder).pack(side="left", padx=(0, 8))
 
         self.run_button = ttk.Button(buttons, text="Iniciar pesquisa", command=self.start_check, style="Primary.TButton")
         self.run_button.pack(side="right", padx=(8, 0))
@@ -126,6 +131,8 @@ class CheckImpressorasApp(tk.Tk):
 
         footer = ttk.Frame(container)
         footer.pack(fill="x")
+        self.progress = ttk.Progressbar(footer, mode="indeterminate", length=180)
+        self.progress.pack(side="right")
         ttk.Label(footer, textvariable=self.status_var, style="Muted.TLabel").pack(anchor="w")
 
     def create_results_tab(self, parent: ttk.Frame) -> None:
@@ -139,6 +146,7 @@ class CheckImpressorasApp(tk.Tk):
         )
         self.result_run_button.pack(side="left", padx=(0, 8))
         ttk.Button(toolbar, text="Abrir Excel", command=self.open_excel).pack(side="left")
+        ttk.Button(toolbar, text="Abrir historico", command=self.open_history).pack(side="left", padx=(8, 0))
 
         self.assistencial_tree = self.create_result_section(
             parent,
@@ -183,6 +191,7 @@ class CheckImpressorasApp(tk.Tk):
         tree.tag_configure("good", background="#e9f7ef")
         tree.tag_configure("warn", background="#fff5d9")
         tree.tag_configure("bad", background="#fde8e8")
+        tree.bind("<Double-1>", self.open_selected_result_printer)
         tree.pack(side="left", fill="both", expand=True)
 
         scroll = ttk.Scrollbar(table_frame, orient="vertical", command=tree.yview)
@@ -200,8 +209,12 @@ class CheckImpressorasApp(tk.Tk):
         ip = self.ip_var.get().strip()
         sector = self.sector_var.get().strip()
         group = checker.normalize_group(self.group_var.get())
-        if not ip or not sector:
-            messagebox.showwarning("Campos obrigatorios", "Informe o IP e o setor.")
+        valid, message = self.validate_form(ip, sector)
+        if not valid:
+            messagebox.showwarning("Cadastro invalido", message)
+            return
+        if self.ip_exists(ip):
+            messagebox.showwarning("IP duplicado", "Este IP ja esta cadastrado.")
             return
         self.tree.insert("", "end", values=(ip, sector, group))
         self.clear_form()
@@ -216,12 +229,35 @@ class CheckImpressorasApp(tk.Tk):
         ip = self.ip_var.get().strip()
         sector = self.sector_var.get().strip()
         group = checker.normalize_group(self.group_var.get())
-        if not ip or not sector:
-            messagebox.showwarning("Campos obrigatorios", "Informe o IP e o setor.")
+        valid, message = self.validate_form(ip, sector)
+        if not valid:
+            messagebox.showwarning("Cadastro invalido", message)
+            return
+        if self.ip_exists(ip, ignore_item=selected[0]):
+            messagebox.showwarning("IP duplicado", "Este IP ja esta cadastrado em outra linha.")
             return
         self.tree.item(selected[0], values=(ip, sector, group))
         self.save_printers(show_message=False)
         self.status_var.set("Impressora atualizada.")
+
+    def validate_form(self, ip: str, sector: str) -> tuple[bool, str]:
+        if not ip or not sector:
+            return False, "Informe o IP e o setor."
+        valid_ip, ip_message = checker.validate_printer_ip(ip)
+        if not valid_ip:
+            return False, ip_message
+        if ";" in sector or "\n" in sector:
+            return False, "O setor nao pode conter ponto e virgula ou quebra de linha."
+        return True, ""
+
+    def ip_exists(self, ip: str, ignore_item: str | None = None) -> bool:
+        for item in self.tree.get_children():
+            if ignore_item and item == ignore_item:
+                continue
+            values = self.tree.item(item, "values")
+            if values and values[0] == ip:
+                return True
+        return False
 
     def remove_selected(self) -> None:
         selected = self.tree.selection()
@@ -250,6 +286,7 @@ class CheckImpressorasApp(tk.Tk):
 
     def save_printers(self, show_message: bool = True) -> None:
         rows = [self.tree.item(item, "values") for item in self.tree.get_children()]
+        self.backup_ips_file()
         lines = [
             "# Coloque uma impressora por linha no formato:",
             "# IP;Setor;Grupo",
@@ -267,10 +304,18 @@ class CheckImpressorasApp(tk.Tk):
         if show_message:
             self.status_var.set("Lista salva.")
 
+    def backup_ips_file(self) -> None:
+        if not IPS_FILE.exists():
+            return
+        BACKUP_DIR.mkdir(exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        shutil.copy2(IPS_FILE, BACKUP_DIR / f"ips-{stamp}.txt")
+
     def start_check(self) -> None:
         self.save_printers(show_message=False)
         self.run_button.configure(state="disabled")
         self.result_run_button.configure(state="disabled")
+        self.progress.start(12)
         self.clear_result_tables()
         self.notebook.select(1)
         self.status_var.set("Pesquisando impressoras... aguarde.")
@@ -284,6 +329,7 @@ class CheckImpressorasApp(tk.Tk):
             checker.write_csv(results, CSV_FILE)
             checker.write_xlsx(results, XLSX_FILE)
             checker.write_html(results, HTML_FILE, CSV_FILE.name)
+            checker.append_history(results, HISTORY_FILE)
             ok_count = sum(1 for result in results if result.ok)
             message = f"Pesquisa concluida: {ok_count}/{len(results)} impressora(s) OK."
             self.result_queue.put(("ok", message, results))
@@ -299,6 +345,7 @@ class CheckImpressorasApp(tk.Tk):
 
         self.run_button.configure(state="normal")
         self.result_run_button.configure(state="normal")
+        self.progress.stop()
         if kind == "ok":
             self.show_results(results or [])
             self.status_var.set(message)
@@ -358,6 +405,26 @@ class CheckImpressorasApp(tk.Tk):
             os.startfile(XLSX_FILE)
         else:
             messagebox.showinfo("Excel nao encontrado", "Clique em Iniciar pesquisa para gerar o Excel.")
+
+    def open_history(self) -> None:
+        if HISTORY_FILE.exists():
+            os.startfile(HISTORY_FILE)
+        else:
+            messagebox.showinfo("Historico nao encontrado", "Clique em Iniciar pesquisa para gerar o historico.")
+
+    def open_project_folder(self) -> None:
+        os.startfile(BASE_DIR)
+
+    def open_selected_result_printer(self, event: tk.Event) -> None:
+        tree = event.widget
+        if not isinstance(tree, ttk.Treeview):
+            return
+        selected = tree.selection()
+        if not selected:
+            return
+        values = tree.item(selected[0], "values")
+        if values:
+            os.startfile(f"http://{values[0]}/sws/index.html")
 
 
 if __name__ == "__main__":

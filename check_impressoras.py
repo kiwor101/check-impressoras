@@ -4,6 +4,7 @@ import argparse
 import csv
 import html
 import http.client
+import ipaddress
 import json
 import re
 import socket
@@ -26,6 +27,8 @@ DEFAULT_IPS_FILE = BASE_DIR / "ips.txt"
 DEFAULT_REPORT_FILE = BASE_DIR / "relatorio_impressoras.html"
 DEFAULT_CSV_FILE = BASE_DIR / "relatorio_impressoras.csv"
 DEFAULT_XLSX_FILE = BASE_DIR / "relatorio_impressoras.xlsx"
+DEFAULT_HISTORY_FILE = BASE_DIR / "historico_impressoras.csv"
+MAX_RESPONSE_BYTES = 2_000_000
 
 PRINTER_PATHS = (
     "/sws/app/information/home/home.json",
@@ -57,6 +60,21 @@ def normalize_group(group: str) -> str:
     if value in {"24h", "assistencial", "assistencial 24h", "critico", "critico 24h", "crítico", "crítico 24h"}:
         return "Assistencial 24h"
     return group.strip() or "Assistencial 24h"
+
+
+def validate_printer_ip(ip: str) -> tuple[bool, str]:
+    try:
+        address = ipaddress.ip_address(ip.strip())
+    except ValueError:
+        return False, "IP invalido."
+
+    if address.version != 4:
+        return False, "Use um IPv4 da rede local."
+    if not address.is_private:
+        return False, "Por seguranca, use apenas IP de rede local."
+    if address.is_loopback or address.is_multicast or address.is_unspecified or address.is_link_local:
+        return False, "IP nao permitido para consulta."
+    return True, ""
 
 
 def read_printers(path: Path) -> list[tuple[str, str, str]]:
@@ -135,7 +153,9 @@ def fetch_url(ip: str, path: str, timeout: float, scheme: str = "http") -> tuple
             },
         )
         response = connection.getresponse()
-        raw = response.read()
+        raw = response.read(MAX_RESPONSE_BYTES + 1)
+        if len(raw) > MAX_RESPONSE_BYTES:
+            raise RuntimeError("Resposta muito grande; consulta bloqueada por seguranca.")
         content_type = response.getheader("Content-Type") or ""
         location = response.getheader("Location") or ""
         charset_match = re.search(r"charset=([^;\s]+)", content_type, re.IGNORECASE)
@@ -293,6 +313,10 @@ def parse_page(ip: str, sector: str, group: str, url: str, raw: str, visible_tex
 
 def check_printer(ip: str, sector: str, group: str, timeout: float) -> PrinterCheck:
     checked_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    valid_ip, validation_error = validate_printer_ip(ip)
+    if not valid_ip:
+        return PrinterCheck(ip=ip, sector=sector, group=group, ok=False, error=validation_error, checked_at=checked_at)
+
     try:
         url, raw = fetch_text(ip, timeout)
         parsed = parse_json_payload(ip, sector, group, url, raw) or parse_page(ip, sector, group, url, raw)
@@ -352,6 +376,13 @@ def result_sort_key(result: PrinterCheck) -> tuple[int, int, int, str, str]:
     )
 
 
+def safe_sheet_text(value: object) -> str:
+    text = str(value or "")
+    if text.startswith(("=", "+", "-", "@", "\t", "\r")):
+        return "'" + text
+    return text
+
+
 def write_csv(results: list[PrinterCheck], path: Path) -> None:
     fieldnames = (
         "Grupo",
@@ -369,10 +400,39 @@ def write_csv(results: list[PrinterCheck], path: Path) -> None:
                 {
                     "Grupo": result.group,
                     "IP": result.ip,
-                    "Setor": result.sector,
+                    "Setor": safe_sheet_text(result.sector),
                     "Cartucho de toner": result.toner_percent,
                     "Unidade de imagem": result.image_unit_percent,
-                    "Resultado": "" if result.ok else result.error,
+                    "Resultado": safe_sheet_text("" if result.ok else result.error),
+                }
+            )
+
+
+def append_history(results: list[PrinterCheck], path: Path) -> None:
+    fieldnames = (
+        "Data hora",
+        "Grupo",
+        "IP",
+        "Setor",
+        "Cartucho de toner",
+        "Unidade de imagem",
+        "Resultado",
+    )
+    file_exists = path.exists()
+    with path.open("a", newline="", encoding="utf-8-sig") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        for result in results:
+            writer.writerow(
+                {
+                    "Data hora": result.checked_at,
+                    "Grupo": result.group,
+                    "IP": result.ip,
+                    "Setor": safe_sheet_text(result.sector),
+                    "Cartucho de toner": result.toner_percent,
+                    "Unidade de imagem": result.image_unit_percent,
+                    "Resultado": safe_sheet_text("" if result.ok else result.error),
                 }
             )
 
@@ -520,7 +580,7 @@ def cell_xml(row: int, col: int, value: object, style: int = 0) -> str:
     style_attr = f' s="{style}"' if style else ""
     if isinstance(value, int):
         return f'<c r="{ref}"{style_attr}><v>{value}</v></c>'
-    text = escape(str(value or ""))
+    text = escape(safe_sheet_text(value))
     return f'<c r="{ref}" t="inlineStr"{style_attr}><is><t>{text}</t></is></c>'
 
 
@@ -649,6 +709,7 @@ def main() -> int:
     parser.add_argument("--html", default=str(DEFAULT_REPORT_FILE), help="Arquivo HTML de saida.")
     parser.add_argument("--csv", default=str(DEFAULT_CSV_FILE), help="Arquivo CSV de saida.")
     parser.add_argument("--xlsx", default=str(DEFAULT_XLSX_FILE), help="Arquivo Excel formatado de saida.")
+    parser.add_argument("--history", default=str(DEFAULT_HISTORY_FILE), help="Arquivo de historico acumulado.")
     parser.add_argument("--timeout", type=float, default=8.0, help="Tempo maximo por tentativa, em segundos.")
     parser.add_argument("--workers", type=int, default=12, help="Quantidade de verificacoes simultaneas.")
     args = parser.parse_args()
@@ -662,10 +723,12 @@ def main() -> int:
     results = check_all(printers, timeout=args.timeout, workers=args.workers)
     csv_path = Path(args.csv)
     xlsx_path = Path(args.xlsx)
+    history_path = Path(args.history)
     html_path = Path(args.html)
     write_csv(results, csv_path)
     write_xlsx(results, xlsx_path)
     write_html(results, html_path, csv_path.name)
+    append_history(results, history_path)
     elapsed = time.time() - start
 
     ok_count = sum(1 for result in results if result.ok)
@@ -673,6 +736,7 @@ def main() -> int:
     print(f"Relatorio HTML: {html_path}")
     print(f"Relatorio CSV:  {csv_path}")
     print(f"Relatorio Excel: {xlsx_path}")
+    print(f"Historico: {history_path}")
     return 0
 
 
