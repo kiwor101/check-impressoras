@@ -1,44 +1,154 @@
 # Check Impressoras
 
-App simples para verificar semanalmente toner e unidade de imagem das impressoras HP Laser MFP 432 pela pagina web interna.
+Aplicativo local para consultar impressoras HP Laser MFP 432 na rede e centralizar as informacoes de **Cartucho de toner** e **Unidade de imagem** em uma tela unica.
+
+O projeto foi criado para evitar a rotina manual de entrar IP por IP na pagina web de cada impressora.
+
+## Funcionalidades
+
+- Cadastro de impressoras por interface grafica.
+- Campos de IP, setor e grupo.
+- Separacao entre setores `Assistencial 24h` e `Administrativo`.
+- Pesquisa automatica das impressoras pela rede local.
+- Resultado exibido dentro do proprio app.
+- Destaque por cor conforme nivel mais baixo entre toner e unidade de imagem.
+- Exportacao para CSV, HTML e Excel formatado.
+- Compatibilidade com impressoras que redirecionam HTTP para HTTPS antigo.
+
+## Regras de cor
+
+| Cor | Condicao |
+| --- | --- |
+| Verde | 30% ou mais |
+| Amarelo | 10% a 29% |
+| Vermelho | 0% a 9% ou erro de acesso |
+
+Linhas amarelas e vermelhas aparecem no topo de cada grupo para facilitar a priorizacao.
+
+## Requisitos
+
+- Windows.
+- Python 3 instalado.
+- Computador conectado na mesma rede das impressoras.
+- Acesso web liberado para as impressoras.
+
+Para verificar se o Python esta instalado:
+
+```powershell
+python --version
+```
 
 ## Como usar
 
-1. Abra `rodar_check.bat` para iniciar a tela do sistema.
-2. Cadastre IP, setor e grupo pela janela.
-3. Clique em `Iniciar pesquisa`.
-4. Veja o resultado na aba `Resultado da pesquisa`.
+1. Abra `rodar_check.bat`.
+2. Cadastre as impressoras na aba `Cadastro`.
+3. Informe `IP`, `Setor` e `Grupo`.
+4. Clique em `Adicionar`.
+5. Clique em `Iniciar pesquisa`.
+6. Veja o resultado na aba `Resultado da pesquisa`.
 
-Para abrir sem nenhuma janela preta piscando, use `Abrir Check Impressoras.vbs`.
+Para abrir com menos aparicao de terminal, use:
 
-O arquivo `ips.txt` continua existindo como base de dados simples. O formato dele e:
+```txt
+Abrir Check Impressoras.vbs
+```
+
+## Cadastro de impressoras
+
+O app salva a lista no arquivo `ips.txt`.
+
+Formato:
 
 ```txt
 IP;Setor;Grupo
 ```
 
-Tambem da para executar pelo terminal, se precisar:
+Exemplos:
+
+```txt
+192.168.1.15;NIR;Assistencial 24h
+192.168.0.200;Financeiro;Administrativo
+```
+
+Se o grupo nao for informado, a impressora entra automaticamente como `Assistencial 24h`.
+
+Exemplo valido:
+
+```txt
+192.168.1.15;NIR
+```
+
+## Relatorios gerados
+
+Apos a pesquisa, o app gera:
+
+| Arquivo | Uso |
+| --- | --- |
+| `relatorio_impressoras.html` | Relatorio para abrir no navegador |
+| `relatorio_impressoras.csv` | Planilha simples, sem cores |
+| `relatorio_impressoras.xlsx` | Planilha Excel formatada com cores |
+
+O resultado principal tambem aparece dentro da propria interface do app.
+
+## Execucao pelo terminal
+
+Tambem e possivel rodar a pesquisa sem abrir a interface:
 
 ```powershell
 python .\check_impressoras.py
 ```
 
-Depois da verificacao, abra:
+Para abrir a interface diretamente pelo Python:
 
-- A aba `Resultado da pesquisa` para ver a tabela dentro do app.
-- `relatorio_impressoras.csv` para abrir no Excel em formato simples.
-- `relatorio_impressoras.xlsx` para abrir no Excel com cores e tabelas separadas.
+```powershell
+python .\check_impressoras_gui.py
+```
+
+## Como funciona
+
+O app consulta os endpoints internos da pagina web da HP Laser MFP 432, principalmente:
+
+```txt
+/sws/app/information/home/home.json
+/sws/app/information/supplies/supplies.json
+```
+
+Os campos usados sao:
+
+| Informacao | Campo da impressora |
+| --- | --- |
+| Cartucho de toner | `toner_black.remaining` |
+| Unidade de imagem | `drum_black.remaining` |
+
+## Estrutura dos arquivos
+
+```txt
+check-impressoras/
+|-- check_impressoras.py
+|-- check_impressoras_gui.py
+|-- ips.txt
+|-- rodar_check.bat
+|-- Abrir Check Impressoras.vbs
+|-- relatorio_impressoras.html
+|-- relatorio_impressoras.csv
+|-- relatorio_impressoras.xlsx
+`-- README.md
+```
 
 ## Observacoes
 
-- O computador precisa estar na mesma rede das impressoras.
-- O grupo pode ser `Assistencial 24h` ou `Administrativo`.
-- Se a linha tiver apenas `IP;Setor`, ela entra automaticamente em `Assistencial 24h`.
-- O setor aparece no HTML e no CSV, junto do `Cartucho de toner` e da `Unidade de imagem`.
-- As linhas ficam verdes acima de 30%, amarelas de 10% a 29% e vermelhas de 0% a 9% ou quando houver erro de acesso.
-- As linhas vermelhas e amarelas aparecem no topo de cada grupo.
-- CSV nao guarda cores; use o arquivo `.xlsx` para ver a formatacao completa no Excel.
-- A primeira versao le a pagina inicial da impressora, como `http://IP/sws/index.html`.
-- O acesso e feito por HTTP simples para evitar erro de HTTPS antigo em algumas impressoras.
-- Se alguma impressora exigir login ou mudar o texto da pagina, ela pode aparecer como erro no relatorio.
-- Para automatizar semanalmente, este script pode ser colocado no Agendador de Tarefas do Windows.
+- O app precisa estar em uma maquina com acesso aos IPs das impressoras.
+- Impressoras desligadas, lentas ou fora da rede aparecem em vermelho com erro no campo `Resultado`.
+- CSV nao guarda cores; use o arquivo `.xlsx` para a versao mais apresentavel no Excel.
+- A lista de IPs pode ser editada pela interface ou manualmente pelo `ips.txt`.
+
+## Status do projeto
+
+Projeto em uso interno e em evolucao.
+
+Melhorias futuras possiveis:
+
+- Gerar instalador para Windows.
+- Criar icone e atalho na area de trabalho.
+- Adicionar historico semanal.
+- Enviar alerta automatico quando algum item estiver amarelo ou vermelho.
